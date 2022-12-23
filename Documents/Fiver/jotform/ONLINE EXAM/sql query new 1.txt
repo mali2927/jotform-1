@@ -1,0 +1,473 @@
+create database onlineexam
+go
+use onlineexam
+go
+
+
+
+
+
+create table admin
+(
+admin_id int primary key ,
+admin_name nvarchar(500),
+admin_email nvarchar(50),
+admin_password nvarchar(50),
+
+)
+
+
+
+create table category
+(
+category_id int primary key,
+category_name nvarchar(50),
+
+)
+
+
+create table exam
+(
+exam_id int primary key,
+exam_name nvarchar(500),
+exam_description nvarchar(3276),
+exam_date date,
+exam_duration int,
+exam_marks int,
+exam_negativemarks int,
+exam_totalquestion int,
+category_fid  int,
+subject_fid int,
+exampass_marks int,
+
+)
+
+create table question
+(
+question_id int primary key,
+question_name nvarchar(3276),
+option_one nvarchar(3276),
+option_two nvarchar(3276),
+option_three nvarchar(3276),
+option_four nvarchar(3276),
+question_answer int,
+exam_fid int,
+)
+
+create table result
+(
+result_id int primary key,
+result_status nvarchar(50),
+result_score int,
+user_email nvarchar(50),
+totalquestion int,
+exam_fid int,
+exam_date date,
+)
+
+create table subject
+(
+subject_id int identity(1,1) primary key,
+subject_name nvarchar(50),
+category_fid int
+)
+
+create table users
+(
+user_id int identity(1,1) primary key,
+user_fname nvarchar(50),
+user_lname nvarchar(50),
+user_email nvarchar(50),
+user_password nvarchar(100),
+)
+
+
+
+
+
+
+
+
+
+
+CREATE procedure [dbo].[spaddexam]
+
+@examname nvarchar(500),
+@examdis nvarchar(MAX),
+@examdate date,
+@examduration int,
+@exampassmarks int,
+@exammarks int,
+@examsubjectfid int,
+@examcategoryfid int
+as
+begin
+      insert into exam
+	  (exam_name,exam_description,exam_date,exam_duration,exampass_marks,exam_marks,subject_fid,category_fid) values
+	  (@examname,@examdis,@examdate,@examduration,@exampassmarks,@exammarks,@examsubjectfid,@examcategoryfid)
+	  
+	  
+	  
+end
+
+
+
+
+
+
+
+
+CREATE procedure [dbo].[spAddquestion]
+@questionname nvarchar(MAX),
+@optionone nvarchar(MAX),
+@optiontwo nvarchar(MAX),
+@optionthree nvarchar(MAX),
+@optionfour nvarchar(MAX),
+@questionanswer int,
+@examfid int
+as
+begin
+        insert into question( question_name,option_one,option_two,option_three,option_four,question_answer,exam_fid) values
+		(@questionname,@optionone,@optiontwo,@optionthree,@optionfour,@questionanswer,@examfid)
+		
+
+end
+
+
+
+
+
+
+CREATE procedure spAdminlogin
+
+@admin_email nvarchar(50),
+@password nvarchar(100),
+as
+begin
+
+  Declare @count int
+  select @count =COUNT(admin_email) form admin
+  where admin_email=@admin_email and admin_password=@password
+  if (@count=1)
+        begin
+		    select 1 as retunvalue
+			end
+			
+			
+	else
+	
+	    begin
+		  select -1 as retunvalue
+		  end
+		  
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+Create procedure spAdminRegisterinsert
+@admin_name values(50),
+@admin_email nvarchar(50),
+@password  nvarchar(100)
+as
+begin
+      declare @count int
+	  declare @returnvalue int
+	  select @count = COUNT(admin_email) from admin where admin_email=@email
+	      if @count>0
+		      begin
+			     set @returnvalue = -1
+				 end
+				 
+				 
+			else
+			  begin
+			     set @returnvalue = 1
+				 insert into admin(admin_name,admin_email,admin_password) values
+				 (@admin_name,@email,@password)
+				 end
+		select @returnvalue as returnvalue
+end
+
+
+
+
+
+
+
+
+CREATE procedure[dbo].[spEditexam]
+@examid int,
+@examname nvarchar(100),
+@examdiscription nvarchar(MAX),
+@examdate date,
+@examduration int,
+@exampassmarks int,
+@examnmarks int,
+@categoryfid int,
+@subjectfid int
+as
+begin
+     update exam set exam_name = @examname, exam_description = @examdiscription,exam_date= @examdate,exam_duration = @examduration, exampass_marks = @exampassmarks ,exam_marks =@examnmarks, category_fid =@categoryfid , subject_fid =@subjectfid 
+	 where exam_id=@examid
+	 
+	 end
+	 
+	 
+	 
+	 
+	 
+	 
+	 CREATE procedure spEditexamfill
+	 @examid int
+	 as
+	 begin
+	     select * from exam where exam_id =@examid
+		 
+	end
+	
+	
+	
+	
+	CREATE procedure [dbo].[spEditquestion]
+	@questionid int,
+	@questionname nvarchar(MAX),
+	@optionone nvarchar(MAX),
+	@optiontwo nvarchar(MAX),
+	@optionthree nvarchar(MAX),
+	@optionfour nvarchar(MAX),
+	@questionanswer int,
+	@examfid int
+	as
+	begin
+	  update question set question_name=@questionname, option_one=@optionone,option_two=@optiontwo, option_three=@optionthree, option_four=@optionfour,question_answer=@questionanswer, exam_fid=@examfid 
+	  where question_id=@questionid
+	  
+	  end
+	  
+	  
+	  
+	  
+	  
+	  Create procedure [dbo].[spEditquestionfill]
+	  @questionid int
+	  as 
+	  
+	  begin
+	     select * from question
+		 left join exam on
+		 question.exam_fid =exam.exam_id
+		 where question_id= @questionid
+end
+
+
+CREATE procedure [dbo].[spExamList]
+as 
+
+begin
+     select *  from exam
+	 left join subject on exam.subject_fid = subject.subject_id
+	 left join category on exam.category_fid =category.category_id
+end
+
+
+
+
+CREATE procedure [dbo].[spExamListDetails]
+@exam_id int
+as
+begin
+     select * from exam
+	 left join subject on exam.subject_fid=subject.subject_id
+	 left join category on exam.category_fid =category.category_id
+	 where exam_id =@exam_id
+end
+
+
+
+
+create procedure spExamquestion
+@examfid int
+as
+begin
+     select * from question
+	 left join exam on
+	 question.exam_fid =exam.exam_id
+	where exam_fid=@examfid
+	
+end
+
+
+CREATE procedure [dbo].[spExamserachcategory]
+@subjectid int
+as
+begin
+     select * from subject
+	 join exam
+	 on
+	 subject.subject_id = exam.subject_fid
+	 where subject_id = @subjectid
+end
+
+
+
+
+CREATE procedure spgetallquestion
+as
+
+begin 
+      select * from question
+	  left join exam on
+	  question.exam_fid = exam.exam_id
+	  
+end
+
+
+
+
+Create procedure spQuestionserachexam
+@examid int
+as
+begin
+     select * from question
+	 join exam
+	 on
+	 exam.exam_id = question.exam_fid
+	 where exam_fid = @examid
+	 
+end
+
+
+
+CREATE procedure [dbo].[spResultinsert]
+@examfid nvarchar(150),
+@resultstatus nvarchar(150),
+@resultscore int,
+@totalquestion int,
+@username nvarchar(50),
+@examdate date
+as
+begin
+      insert into result (exam_fid,result_status,result_score,totalquestion,user_email,exam_date) values
+	  (@examfid,@resultstatus,@resultscore,@totalquestion,@username,@examdate)
+	  
+end
+
+
+
+
+create procedure spSubjectedit
+@subject_name nvarchar(50),
+@category_id int,
+@subject_id int
+as
+begin
+     update subject set subject_name= @subject_name, category_fid=@category_id where subject_id=@subject_id 
+	 
+	 
+end
+
+
+
+
+
+
+create procedure spSubjecteditfill
+@id int
+as
+begin
+     select * from subject
+	 left join category
+	 on
+	 subject.category_fid=category.category_id where subject_id=@id
+	 
+end
+
+
+
+CREATE procedure spSubjectList
+as
+begin
+select * from subject
+left join category
+on
+subject.category_fid=category.category_id
+
+end
+
+
+
+
+create procedure spUserresult
+@email nvarchar(50)
+as 
+begin
+     select * from result
+	 join exam
+	 on
+	 result.exam_fid = exam.exam_id
+	 where user_email= @email
+end
+
+
+
+
+
+Create procedure spUserslogin
+@user_email nvarchar(50),
+@password nvarchar(100)
+as
+begin
+      Declare @count int
+	  select @count =COUNT(user_email) from users
+	  where user_email= @user_email and user_password=@password
+	  if (@count = 1)
+	         begin
+			      select 1 as retunvalue
+			end
+			
+	   else
+	       begin
+		       select -1 as retunvalue
+			end
+end
+
+
+
+
+create procedure spUsersRegisterinsert
+@user_fname nvarchar(50),
+@user_lname nvarchar(50),
+@email nvarchar(50),
+@password nvarchar(100)
+as
+begin
+     declare @count int
+	 declare @returnvalue int
+	 select @count = COUNT(user_email) from users where user_email = @email
+	     if @count>0
+		      begin
+			      set @returnvalue =-1
+				  
+			   end
+			   
+		else
+		  begin
+		      set @returnvalue =1
+			  insert into users (user_fname,user_lname,user_password,user_email) values
+			  (@user_fname,@user_lname,@password,@email)
+			 end
+		select @returnvalue as returnvalue
+end
+
+
+	
